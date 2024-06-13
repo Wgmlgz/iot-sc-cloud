@@ -64,8 +64,11 @@ def process_and_save_video(video_path, output_path):
     frame_width = int(cap.get(3))
     frame_height = int(cap.get(4))
     size = (frame_width, frame_height)
-    out = cv2.VideoWriter(output_path, cv2.VideoWriter_fourcc(*"mp4v"), 20, size)
 
+    fourcc = cv2.VideoWriter_fourcc(*"MJPG")
+    temp_output_path = output_path.replace(".mp4", ".avi")  # Temp file as AVI
+
+    out = cv2.VideoWriter(temp_output_path, fourcc, 20, size)
     detection_stats = {}
 
     first_frame = True
@@ -108,8 +111,16 @@ def process_and_save_video(video_path, output_path):
 
     cap.release()
     out.release()
+    convert_video_to_mp4(temp_output_path, output_path)
 
     return detection_stats
+
+
+def convert_video_to_mp4(input_path, output_path):
+    import subprocess
+
+    command = f"ffmpeg -y -i {input_path} -vcodec libx264 {output_path}"
+    subprocess.run(command, shell=True)
 
 
 @app.route("/upload", methods=["POST"])
@@ -131,10 +142,17 @@ def upload_video():
     with open(output_video_path, "rb") as data:
         s3_client.upload_fileobj(data, S3_BUCKET, video_path)
 
+    presigned_url = s3_client.generate_presigned_url(
+        "get_object",
+        Params={"Bucket": S3_BUCKET, "Key": video_path},
+        ExpiresIn=3600,
+    )
+
     res = {
         "status": 1,
         "message": "Video processed and uploaded successfully.",
         "video_path": video_path,
+        "video_url": presigned_url,
     }
     res.update(detection_stats)
     return jsonify(res)
