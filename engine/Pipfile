@@ -12,6 +12,7 @@ python-dotenv = "*"
 numpy = "*"
 av = "*"
 pillow = "*"
+sanic = "*"
 
 [dev-packages]
 

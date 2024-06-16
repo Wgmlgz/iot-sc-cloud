@@ -1,11 +1,12 @@
 from flask import Flask, request, jsonify
 import cv2
 import boto3
-import requests
 import datetime
 import os
 import numpy as np
-import av
+import cv2
+import numpy as np
+import os
 
 app = Flask(__name__)
 
@@ -14,8 +15,7 @@ AWS_ACCESS_KEY = os.getenv("AWS_ACCESS_KEY")
 AWS_SECRET_KEY = os.getenv("AWS_SECRET_KEY")
 S3_BUCKET = os.getenv("S3_BUCKET")
 THINGSBOARD_URL = os.getenv("THINGSBOARD_URL")
-THINGSBOARD_TOKEN = os.getenv("THINGSBOARD_TOKEN")
-
+PORT = int(os.getenv("PORT"))
 s3_client = boto3.client(
     "s3",
     endpoint_url="https://storage.yandexcloud.net",
@@ -29,9 +29,6 @@ s3_client = boto3.client(
 #     return response.status_code == 200
 
 
-import cv2
-import numpy as np
-import os
 
 
 def setup_network():
@@ -159,4 +156,4 @@ def upload_video():
 
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+    app.run(host='0.0.0.0', port=PORT)
