@@ -31,7 +31,6 @@
       };
     });
   };
-  console.log(self);
 
   const findCanvas = () => {
     const allElements = document.querySelectorAll('*');
@@ -91,8 +90,8 @@
       const textContent = element.textContent;
       const match = textContent?.match(dateRegex);
       if (match) {
-        const startTime = parseDateAsUTC(match[1]);
-        const endTime = parseDateAsUTC(match[2]);
+        const startTime = new Date(match[1]);
+        const endTime = new Date(match[2]);
         const start = startTime.getTime();
         const end = endTime.getTime();
         console.log(start, end);
@@ -100,20 +99,29 @@
         const token = localStorage.getItem('jwt_token');
         const ts = 1719166220 * 1000;
         1719181787229;
+
         await Promise.all(
           arr.map(async ({ datasource }) => {
-            const { data } = await axios.get(
-              `/api/plugins/telemetry/${datasource.entityType}/${datasource.entityId}/values/timeseries?keys=video_path&startTs=${start}&endTs=${end}`,
-              {
-                headers: {
-                  'X-Authorization': `Bearer ${token}`,
-                },
+            let diff = end - start;
+            for (let i = 0; i < 5; i += 1) {
+              const { data } = await axios.get(
+                `/api/plugins/telemetry/${datasource.entityType}/${datasource.entityId}/values/timeseries?keys=video_path&startTs=${start}&endTs=${start + diff}`,
+                {
+                  headers: {
+                    'X-Authorization': `Bearer ${token}`,
+                  },
+                }
+              );
+              console.log(data);
+              const t = data?.video_path.at(-1);
+              if (!t) {
+                diff *= 2;
+                continue;
               }
-            );
-            console.log(data);
-            const t = data?.video_path?.[0];
-            if (!t) return;
-            selected_video = t;
+
+              selected_video = t;
+              break;
+            }
           })
         );
       }
